@@ -1,4 +1,4 @@
-#ifdef PLUGIN_BUILD_TESTING
+//#ifdef PLUGIN_BUILD_TESTING
 
 // #######################################################################################################
 // ##################################### Plugin 124: Ventus W266 RFM69 ###################################
@@ -1028,7 +1028,7 @@ void RFM69_setMode(uint8_t newMode)
 }
 
 void RFM69init()
-{  
+{
   digitalWrite(Plugin_124_RESET_Pin, HIGH);
   delay(10);
   digitalWrite(Plugin_124_RESET_Pin, LOW);
@@ -1171,7 +1171,7 @@ uint8_t calcCRC(uint8_t *buffer, uint8_t data_size)
 boolean Plugin_124(uint8_t function, struct EventStruct *event, String& string)
 {
   boolean success = false;
- 
+
   switch (function)
   {
     case PLUGIN_DEVICE_ADD:
@@ -1200,7 +1200,7 @@ boolean Plugin_124(uint8_t function, struct EventStruct *event, String& string)
       {
         strcpy_P(ExtraTaskSettings.TaskDeviceValueNames[0], PSTR(PLUGIN_VALUENAME1_124));
         strcpy_P(ExtraTaskSettings.TaskDeviceValueNames[1], PSTR(PLUGIN_VALUENAME2_124));
-        strcpy_P(ExtraTaskSettings.TaskDeviceValueNames[2], PSTR(PLUGIN_VALUENAME3_124));        
+        strcpy_P(ExtraTaskSettings.TaskDeviceValueNames[2], PSTR(PLUGIN_VALUENAME3_124));
         break;
       }
 
@@ -1218,7 +1218,7 @@ boolean Plugin_124(uint8_t function, struct EventStruct *event, String& string)
 
         if (instanceType == INSTANCE_TH)
           addFormNumericBox(F("Unit ID"), F("plugin_124_unitID"), Settings.TaskDevicePluginConfig[event->TaskIndex][1], 0, 255);
-          
+
         addFormSelector(F("Plugin function"), F("plugin_124_instanceType"), NUMBER_OF_INSTANCES, instance, NULL, instanceType);
 
         addFormSubHeader(F("Information"));
@@ -1228,7 +1228,7 @@ boolean Plugin_124(uint8_t function, struct EventStruct *event, String& string)
           case INSTANCE_TH:
             {
               addHtml(F("<BR><B>Be sure to only have one main plugin!</B>"));
-              
+
               addHtml(F("<BR><BR>Value 1: Temperature (1 decimal)"));
               addHtml(F("<BR>Value 2: Humidity (0 decimal)"));
               addHtml(F("<BR>Value 3: not used"));
@@ -1245,7 +1245,7 @@ boolean Plugin_124(uint8_t function, struct EventStruct *event, String& string)
             {
               addHtml(F("<BR>Value 1: Total rain in mm (1 decimal)"));
               addHtml(F("<BR>Value 2: Rainfall past hour in mm (1 decimal)"));
-              addHtml(F("<BR>Value 3: not used"));              
+              addHtml(F("<BR>Value 3: not used"));
               break;
             }
           case INSTANCE_UV:
@@ -1301,7 +1301,7 @@ boolean Plugin_124(uint8_t function, struct EventStruct *event, String& string)
 
               // initilize RFM69
               RFM69init();
-              
+
               addLog(LOG_LEVEL_INFO, F("P124 : RFM69 Init"));
 
               break;
@@ -1314,7 +1314,7 @@ boolean Plugin_124(uint8_t function, struct EventStruct *event, String& string)
     case PLUGIN_ONCE_A_SECOND:
       {
         // Main TH-instance calling?
-        if (Settings.TaskDevicePluginConfig[event->TaskIndex][0] == INSTANCE_TH)        
+        if (Settings.TaskDevicePluginConfig[event->TaskIndex][0] == INSTANCE_TH)
         {
           if (dataPending == true)
           {
@@ -1327,7 +1327,7 @@ boolean Plugin_124(uint8_t function, struct EventStruct *event, String& string)
             {
               uint8_t i = 0;
               uint8_t buffer[PAYLOAD_SIZE];
-      
+
               // fetch FIFO
               // receiver is disabled until FIFO is completely empty -> receiver is auto-enabled when done
               digitalWrite(Plugin_124_SPI_CS_Pin, LOW);
@@ -1335,30 +1335,30 @@ boolean Plugin_124(uint8_t function, struct EventStruct *event, String& string)
               while ((digitalRead(Plugin_124_DIO0_Pin) == HIGH) && (i < PAYLOAD_SIZE))
                 buffer[i++] = SPI.transfer(0x00);
               digitalWrite(Plugin_124_SPI_CS_Pin, HIGH);
-      
+
 #ifdef PLUGIN_124_DEBUG
               // CRC correct?
               if (buffer[21] == calcCRC((uint8_t*)buffer, (PAYLOAD_SIZE - 1)))
               {
                 String log = F("P124 : RX: ");
-      
+
                 for (i = 0; i < PAYLOAD_SIZE; i++)
                 {
                   //log += String(buffer[i], HEX);    // hexadecimal output format
                   log += buffer[i];                   // decimal output format
                   log += F(" ");
                 }
-      
+
                 // Ventus ID matches specified unit ID?
                 if (buffer[0] == Settings.TaskDevicePluginConfig[event->TaskIndex][1])
                   log += F(" IDs match");
                 else
                   log += F(" IDs do not match!");
-      
+
                 addLog(LOG_LEVEL_INFO, log);
               }
 #endif  // PLUGIN_124_DEBUG
-      
+
               // CRC correct and IDs match?
               if ((buffer[21] == calcCRC((uint8_t*)buffer, (PAYLOAD_SIZE - 1))) && (buffer[0] == Settings.TaskDevicePluginConfig[event->TaskIndex][1]))
               {
@@ -1375,7 +1375,7 @@ boolean Plugin_124(uint8_t function, struct EventStruct *event, String& string)
                 else
                   strikesDistance = buffer[17];                                             // km
                 strikesTotal = (buffer[20] << 8) + buffer[19];                              // count
-      
+
                 // Data plausibility check
                 if ((humidity <= 100) &&
                     (temperature >= -20) && (temperature <= 60) &&
@@ -1392,7 +1392,7 @@ boolean Plugin_124(uint8_t function, struct EventStruct *event, String& string)
                 }
               }
             }
-      
+
             // sensor data is initialized and valid?
             if (dataValid)
             {
@@ -1416,7 +1416,7 @@ boolean Plugin_124(uint8_t function, struct EventStruct *event, String& string)
               strikesPast5minutes = (strikesTotal + 0xFFFF) - strikes5minutesAgoe;
             strikes5minutesAgoe = strikesTotal;
           }
-      
+
           // timer for rain-statistic
           if (timer3600s-- <= 1)
           {
@@ -1448,7 +1448,7 @@ boolean Plugin_124(uint8_t function, struct EventStruct *event, String& string)
                 }
                 break;
             }
-              
+
             case INSTANCE_WIND:
               {
                 if (timeSlot == 1)
@@ -1461,7 +1461,7 @@ boolean Plugin_124(uint8_t function, struct EventStruct *event, String& string)
                 }
                 break;
               }
-         
+
             case INSTANCE_RAIN:
               {
                 if (timeSlot == 2)
@@ -1474,7 +1474,7 @@ boolean Plugin_124(uint8_t function, struct EventStruct *event, String& string)
                 }
                 break;
               }
-  
+
             case INSTANCE_UV:
               {
                 if (timeSlot == 3)
@@ -1487,7 +1487,7 @@ boolean Plugin_124(uint8_t function, struct EventStruct *event, String& string)
                 }
                 break;
               }
-              
+
             case INSTANCE_LIGHTNING:
               {
                 if (timeSlot == 4)
@@ -1500,7 +1500,7 @@ boolean Plugin_124(uint8_t function, struct EventStruct *event, String& string)
                 }
                 break;
               }
-              
+
             case INSTANCE_BATTERY:
               {
                 if (timeSlot == 5)
@@ -1514,7 +1514,7 @@ boolean Plugin_124(uint8_t function, struct EventStruct *event, String& string)
                 break;
               }
           }
-  
+
           if (timeSlot > 5)
           {
             timeSlot = 0;
@@ -1529,9 +1529,9 @@ boolean Plugin_124(uint8_t function, struct EventStruct *event, String& string)
       {
         success = false;
         break;
-      }      
+      }
   }
   return success;
 }
 
-#endif
+//#endif
